@@ -5,12 +5,13 @@ import tkinter as tk
 from tkinter import messagebox
 from recursos.funcoes import inicializarBancoDeDados
 from recursos.funcoes import escreverDados
+from recursos.funcoes import aguarde
 import json
+from recursos.funcoes import contagemRegressiva
 
 pygame.init()
 inicializarBancoDeDados()
 tamanho = (1000,700)
-cowboyTamanho = (110, 100)
 relogio = pygame.time.Clock()
 tela = pygame.display.set_mode( tamanho )
 pygame.display.set_caption("Velho Oeste")
@@ -19,7 +20,7 @@ preto = (0, 0 ,0 )
 bege = (198, 129, 40)
 corCaixa = (253, 193, 127)
 corS = (243, 146, 85)
-cowboy = pygame.image.load("recursos/cowboy.png")
+cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (110, 100))
 cabecaZumbi = pygame.image.load("recursos/cabeçaZumbi.png")
 fundoInicio = pygame.image.load("recursos/fundoInicio.png")
 fundo = pygame.image.load("recursos/fundo.png")
@@ -27,16 +28,24 @@ icone = pygame.image.load("recursos/icone.png")
 pygame.display.set_icon(icone)
 nuvem = pygame.image.load("recursos/nuvem.png")
 projetil = pygame.image.load("recursos/projetil.png")
-zumbi = pygame.image.load("recursos/Zumbi.png")
-zumbi2 =pygame.image.load("recursos/Zumbi2.png")
+Zumbi = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi.png").convert_alpha(), (60, 80))
+Zumbi2 = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi2.png").convert_alpha(), (60, 80))
 somTiro = pygame.mixer.Sound("recursos/somTiro.mp3")
 somZumbi = pygame.mixer.Sound("recursos/somZumbi1.mp3")
 somZumbi2 = pygame.mixer.Sound("recursos/somZumbi2.mp3")
 fonteInicio = pygame.font.SysFont("comicsans",25)
 fonteTitulo = pygame.font.Font("recursos/FonteInicio.ttf",150)
 fonteExplicacao = pygame.font.SysFont("comicsans",18)
-largura_janela = 300
-altura_janela = 50
+larguraJanela = 300
+alturaJanela = 50
+listaZumbis = [Zumbi, Zumbi2]
+faixasPosicaoX = [
+    (424, 584), 
+    (410, 598),  
+    (350, 670),
+    (180, 700),
+]
+
 def obter_nome():
     global nome
     nome = entry_nome.get() 
@@ -47,11 +56,11 @@ def obter_nome():
         root.destroy() 
     
 root = tk.Tk()
-largura_tela = root.winfo_screenwidth()
-altura_tela = root.winfo_screenheight()
-pos_x = (largura_tela - largura_janela) // 2
-pos_y = (altura_tela - altura_janela) // 2
-root.geometry(f"{largura_janela}x{altura_janela}+{pos_x}+{pos_y}")
+larguraTela = root.winfo_screenwidth()
+alturaTela = root.winfo_screenheight()
+pos_x = (larguraTela - larguraJanela) // 2
+pos_y = (alturaTela - alturaJanela) // 2
+root.geometry(f"{larguraJanela}x{alturaJanela}+{pos_x}+{pos_y}")
 root.title("Digite seu Nick")
 root.protocol("WM_DELETE_WINDOW", obter_nome)
 
@@ -67,11 +76,32 @@ def jogar():
     posicaoXCowboy = 420
     posicaoYCowboy = 600
     movimentoXCowboy = 0
-    redimencaoCowboy = pygame.transform.smoothscale(cowboy, cowboyTamanho)
     pygame.mixer.music.stop()
     pygame.mixer.music.load("recursos/musicaJogo.mp3")
     pygame.mixer.music.play()
     pygame.mixer.music.play(-1)
+    class Inimigo:
+        def __init__(self):
+            self.imagem = random.choice(listaZumbis)
+            self.largura = self.imagem.get_width()
+            self.altura = self.imagem.get_height()
+            faixa = random.choice(faixasPosicaoX)
+            self.x = random.randint(faixa[0], faixa[1] - self.largura)
+            self.y = random.randint(250, 450)
+            self.velocidade = random.uniform(0.1, 1)
+
+        def mover(self):
+            self.y += self.velocidade
+            if self.y > 700:
+                self.y = random.randint(250, 450)
+                faixa = random.choice(faixasPosicaoX)
+                self.x = random.randint(faixa[0], faixa[1] - self.largura)
+
+        def desenhar(self):
+            tela.blit(self.imagem, (self.x, self.y))
+
+    NUM_INIMIGOS = 2
+    inimigos = [Inimigo() for _ in range(NUM_INIMIGOS)]
 
     while True:
         for evento in pygame.event.get():
@@ -93,12 +123,20 @@ def jogar():
         elif posicaoXCowboy > 670:
             posicaoXCowboy = 670
 
-        tela.blit(fundo, (0,0)) 
-        tela.blit( redimencaoCowboy, (posicaoXCowboy, posicaoYCowboy) )      
-            
+        for inimigo in inimigos:
+            inimigo.mover()
+
+        
+        tela.blit(fundo, (0, 0))
+
+        for inimigo in inimigos:
+            inimigo.desenhar()
+
+        tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
+
         pygame.display.update()
         relogio.tick(60)
-
+        
 def start():     
     larguraBotaoStart = 100
     alturaBotaoStart  = 35
@@ -120,7 +158,9 @@ def start():
                     alturaBotaoStart  = 37
             elif evento.type == pygame.MOUSEBUTTONUP:
                 if startBotao.collidepoint(evento.pos):
+                    contagemRegressiva()
                     jogar()
+                    
                                 
         tela.fill(branco)
         tela.blit(fundoInicio, (0,0) )
@@ -144,4 +184,5 @@ def start():
 
         pygame.display.update()
         relogio.tick(60)    
+
 start()
