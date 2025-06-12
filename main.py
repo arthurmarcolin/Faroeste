@@ -1,20 +1,19 @@
-import os
-import pygame
-import random
+import os, json, pygame, random, pyttsx3, threading
 import tkinter as tk
+import speech_recognition as sr
 from tkinter import messagebox
 from recursos.funcoes import inicializarBancoDeDados
+from recursos.funcoes import contagemRegressiva
 from recursos.funcoes import escreverDados
 from recursos.funcoes import aguarde
-import json
-from recursos.funcoes import contagemRegressiva
-
+from recursos.funcoes import falarTexto
+engine=pyttsx3.init()
 pygame.init()
 inicializarBancoDeDados()
 tamanho = (1000,700)
 relogio = pygame.time.Clock()
 tela = pygame.display.set_mode( tamanho )
-pygame.display.set_caption("Velho Oeste")
+pygame.display.set_caption("Forasteiro Maluko")
 branco = (255,255,255)
 preto = (0, 0 ,0 )
 bege = (198, 129, 40)
@@ -36,8 +35,6 @@ somZumbi2 = pygame.mixer.Sound("recursos/somZumbi2.mp3")
 fonteInicio = pygame.font.SysFont("comicsans",25)
 fonteTitulo = pygame.font.Font("recursos/FonteInicio.ttf",150)
 fonteExplicacao = pygame.font.SysFont("comicsans",18)
-larguraJanela = 300
-alturaJanela = 50
 listaZumbis = [Zumbi, Zumbi2]
 faixasPosicaoX = [
     (424, 584), 
@@ -46,32 +43,67 @@ faixasPosicaoX = [
     (180, 700),
 ]
 
+def reconhecerFala():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        try:
+            label_status.config(text="Ouvindo...")
+            audio = recognizer.listen(source, timeout=5)
+            label_status.config(text="Reconhecendo...")
+            texto = recognizer.recognize_google(audio, language='pt-BR')
+            entry_nome.insert(tk.END, texto)
+            label_status.config(text="Texto adicionado!")
+        except sr.UnknownValueError:
+            label_status.config(text="Não entendi o que você disse.")
+        except sr.RequestError:
+            label_status.config(text="Erro ao acessar o serviço de reconhecimento.")
+        except sr.WaitTimeoutError:
+            label_status.config(text="Tempo de escuta acabou.")
+
+def iniciarVozEreconhecimento():
+    
+    falarTexto("Fale seu nickname em voz alta para começar.")
+   
+    reconhecerFala()
+
+def iniciarThreadVoz():
+    thread = threading.Thread(target=iniciarVozEreconhecimento)
+    thread.start()
+
 def obter_nome():
     global nome
-    nome = entry_nome.get() 
-    if not nome: 
-        messagebox.showwarning("Aviso", "Por favor, digite seu nome!")
+    nome = entry_nome.get()
+    if not nome:
+        messagebox.showwarning("Aviso", "Por favor, diga ou digite seu nome!")
     else:
-            
-        root.destroy() 
-    
+        root.destroy()
+
 root = tk.Tk()
+larguraJanela = 400
+alturaJanela = 100
 larguraTela = root.winfo_screenwidth()
 alturaTela = root.winfo_screenheight()
 pos_x = (larguraTela - larguraJanela) // 2
 pos_y = (alturaTela - alturaJanela) // 2
 root.geometry(f"{larguraJanela}x{alturaJanela}+{pos_x}+{pos_y}")
-root.title("Digite seu Nick")
+root.title("Diga seu Nick")
 root.protocol("WM_DELETE_WINDOW", obter_nome)
 
-entry_nome = tk.Entry(root)
-entry_nome.pack()
+entry_nome = tk.Entry(root, font=("Arial", 14))
+entry_nome.pack(pady=10)
 
 botao = tk.Button(root, text="Confirmar", command=obter_nome)
-botao.pack()
+botao.pack(pady=5)
+
+label_status = tk.Label(root, text="")
+label_status.pack(pady=5)
+
+root.after(1000, iniciarThreadVoz)
 
 root.mainloop()
 
+engine.say(f"Seja Bem Vindo {nome} ")
+engine.runAndWait()
 def jogar():
     posicaoXCowboy = 420
     posicaoYCowboy = 600
@@ -80,6 +112,7 @@ def jogar():
     pygame.mixer.music.load("recursos/musicaJogo.mp3")
     pygame.mixer.music.play()
     pygame.mixer.music.play(-1)
+
     class Inimigo:
         def __init__(self):
             self.imagem = random.choice(listaZumbis)
@@ -137,7 +170,7 @@ def jogar():
         pygame.display.update()
         relogio.tick(60)
         
-def start():     
+def start():
     larguraBotaoStart = 100
     alturaBotaoStart  = 35
     larguraCaixaTexto = 550
@@ -148,20 +181,20 @@ def start():
     pygame.mixer.music.play()
     pygame.mixer.music.play(-1)
     
+    
     while True:
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 quit()
             elif evento.type == pygame.MOUSEBUTTONDOWN:
                 if startBotao.collidepoint(evento.pos):
-                    larguraBotaoStart = 147
-                    alturaBotaoStart  = 37
+                    larguraBotaoStart = 96
+                    alturaBotaoStart  =31
             elif evento.type == pygame.MOUSEBUTTONUP:
                 if startBotao.collidepoint(evento.pos):
                     contagemRegressiva()
                     jogar()
-                    
-                                
+                                          
         tela.fill(branco)
         tela.blit(fundoInicio, (0,0) )
         caixaTexto = pygame.draw.rect(tela, corCaixa, pygame.Rect (225, 320, larguraCaixaTexto, alturaCaixaTexto), border_radius=15)

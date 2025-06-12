@@ -1,11 +1,13 @@
-import os, time
-import json
+import os, time, json, pygame, pyttsx3, threading
 from datetime import datetime
-import pygame
+import speech_recognition as sr
+import tkinter as tk
+from tkinter import messagebox
+engine=pyttsx3.init()
 tamanho = (1000, 700)
 branco = (255,255,255)
-tela = pygame.display.set_mode( tamanho )
 preto = (0, 0 ,0 )
+tela = pygame.display.set_mode( tamanho )
 fundo = pygame.image.load("recursos/fundo.png")
 cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (110, 100))
 def limpar_tela():
@@ -58,3 +60,8 @@ def contagemRegressiva():
     tela.blit(texto, texto_rect)
     pygame.display.flip()
     pygame.time.delay(1000)
+
+def falarTexto(texto):
+    engine = pyttsx3.init()
+    engine.say(texto)
+    engine.runAndWait()
