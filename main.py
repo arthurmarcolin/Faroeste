@@ -35,30 +35,39 @@ somZumbi2 = pygame.mixer.Sound("recursos/somZumbi2.mp3")
 fonteInicio = pygame.font.SysFont("comicsans",25)
 fonteTitulo = pygame.font.Font("recursos/FonteInicio.ttf",150)
 fonteExplicacao = pygame.font.SysFont("comicsans",18)
-listaZumbis = [Zumbi, Zumbi2]
+zumbisComSons = [
+    (Zumbi, somZumbi),
+    (Zumbi2, somZumbi2),  
+]
 faixasPosicaoX = [
     (424, 584), 
     (410, 598),  
     (350, 670),
-    (180, 700),
+    (230, 690),
 ]
 
 def reconhecerFala():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         try:
-            label_status.config(text="Ouvindo...")
+            label_status.after(0, lambda: label_status.config(text="Ouvindo..."))
+
             audio = recognizer.listen(source, timeout=5)
-            label_status.config(text="Reconhecendo...")
+
+            label_status.after(0, lambda: label_status.config(text="Reconhecendo..."))
+
             texto = recognizer.recognize_google(audio, language='pt-BR')
-            entry_nome.insert(tk.END, texto)
-            label_status.config(text="Texto adicionado!")
+
+            entry_nome.after(0, lambda: entry_nome.insert(tk.END, texto))
+            label_status.after(0, lambda: label_status.config(text="Texto adicionado!"))
+
         except sr.UnknownValueError:
-            label_status.config(text="Não entendi o que você disse.")
+            label_status.after(0, lambda: label_status.config(text="Não entendi o que você disse."))
         except sr.RequestError:
-            label_status.config(text="Erro ao acessar o serviço de reconhecimento.")
+            label_status.after(0, lambda: label_status.config(text="Erro ao acessar o serviço de reconhecimento."))
         except sr.WaitTimeoutError:
-            label_status.config(text="Tempo de escuta acabou.")
+            label_status.after(0, lambda: label_status.config(text="Tempo de escuta acabou."))
+
 
 def iniciarVozEreconhecimento():
     
@@ -107,34 +116,59 @@ engine.runAndWait()
 def jogar():
     posicaoXCowboy = 420
     posicaoYCowboy = 600
+    cowboyTamanho = (110, 100)
     movimentoXCowboy = 0
+    projeteis = []
     pygame.mixer.music.stop()
     pygame.mixer.music.load("recursos/musicaJogo.mp3")
+    pygame.mixer.music.set_volume(0.30)
     pygame.mixer.music.play()
     pygame.mixer.music.play(-1)
 
     class Inimigo:
         def __init__(self):
-            self.imagem = random.choice(listaZumbis)
+            self.imagem, self.som = random.choice(zumbisComSons)
             self.largura = self.imagem.get_width()
             self.altura = self.imagem.get_height()
             faixa = random.choice(faixasPosicaoX)
             self.x = random.randint(faixa[0], faixa[1] - self.largura)
-            self.y = random.randint(250, 450)
+            self.y = random.randint(290, 420)
             self.velocidade = random.uniform(0.1, 1)
+            self.som.play()
 
-        def mover(self):
+        def reaparecer(self):
             self.y += self.velocidade
             if self.y > 700:
                 self.y = random.randint(250, 450)
                 faixa = random.choice(faixasPosicaoX)
                 self.x = random.randint(faixa[0], faixa[1] - self.largura)
+                self.imagem, self.som = random.choice(zumbisComSons)
+                self.som.play()
 
         def desenhar(self):
             tela.blit(self.imagem, (self.x, self.y))
 
     NUM_INIMIGOS = 2
     inimigos = [Inimigo() for _ in range(NUM_INIMIGOS)]
+
+    class Projetil:
+        def __init__(self, x, y, img):
+            self.imagem = pygame.transform.scale(projetil, (13,13))
+            self.x = x
+            self.y = y
+            self.img = img
+            self.velocidade = -10
+            self.limiteSuperior = 350
+
+        def mover(self):
+            self.y += self.velocidade
+        
+        def desenhar (self):
+            tela.blit(self.imagem, (self.x, self.y))
+
+        def limiteProjetil(self):
+            return self.y < self.limiteSuperior
+        
 
     while True:
         for evento in pygame.event.get():
@@ -148,8 +182,11 @@ def jogar():
                 movimentoXCowboy = 0
             elif evento.type == pygame.KEYUP and evento.key == pygame.K_LEFT:
                 movimentoXCowboy = 0
-    
-        posicaoXCowboy = posicaoXCowboy + movimentoXCowboy                    
+            elif evento.type == pygame.KEYUP and evento.key == pygame.K_s:
+                x_projetil = posicaoXCowboy + 82
+                y_projetil = posicaoYCowboy + 7
+                projeteis.append(Projetil(x_projetil, y_projetil, projetil))
+                somTiro.play()                  
             
         if posicaoXCowboy < 150 :
             posicaoXCowboy = 150
@@ -157,15 +194,34 @@ def jogar():
             posicaoXCowboy = 670
 
         for inimigo in inimigos:
-            inimigo.mover()
+            inimigo.reaparecer()
 
-        
+                
         tela.blit(fundo, (0, 0))
 
+        for p in projeteis[:]:
+            p.mover()
+            p.desenhar()
+            if p.limiteProjetil():
+                projeteis.remove(p)
+                
         for inimigo in inimigos:
             inimigo.desenhar()
 
+        for p in projeteis[:]:
+            projetilRect = pygame.Rect(p.x, p.y, p.imagem.get_width(), p.imagem.get_height())
+            for i in inimigos[:]:
+                inimigoRect = pygame.Rect(i.x, i.y, i.imagem.get_width(), i.imagem.get_height())
+                if projetilRect.colliderect(inimigoRect):
+                    projeteis.remove(p)
+                    inimigos.remove(i)
+                    inimigos.append(Inimigo())
+                    break
+
+        
+
         tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
+        tela.blit(nuvem, (450, 100))
 
         pygame.display.update()
         relogio.tick(60)
@@ -203,14 +259,15 @@ def start():
         startTitulo = fonteTitulo.render("BEM-VINDO", True, bege)
         startTexto = fonteInicio.render("Jogar", True, preto)
         playerName = fonteExplicacao.render(f"Nickname: {nome}", True, preto)
-        textoExplicacao = fonteExplicacao.render("O objetivo do jogo é matar os zumbis antes que eles cheguem ao", True, preto)
-        textoExplicacao2 = fonteExplicacao.render("fim da tela, se isso acontecer você perde uma vida. Você terá 5", True, preto)
-        textoExplicacao3 = fonteExplicacao.render("vidas. Para movimentar o personagem use as setas Direita e Es-", True, preto)
-        textoExplicacao4 = fonteExplicacao.render("querda e para atirar use a tecla S .", True, preto)
-        tela.blit(textoExplicacao, (235, 360))
-        tela.blit(textoExplicacao2, (235, 390))
-        tela.blit(textoExplicacao3, (235, 420))
-        tela.blit(textoExplicacao4, (235, 450))
+        explicacoes = [
+        "O objetivo do jogo é matar os zumbis antes que eles cheguem ao",
+        "fim da tela, se isso acontecer você perde uma vida. Você terá 5",
+        "vidas. Para movimentar o personagem use as setas Direita e Es-",
+        "querda e para atirar use a tecla S ."
+        ]   
+        for i in range(len(explicacoes)):
+            linha_renderizada = fonteExplicacao.render(explicacoes[i], True, preto)
+            tela.blit(linha_renderizada, (235, 360 + i * 30))
         tela.blit(playerName, (440, 324))
         tela.blit(startTitulo, (265, 20))
         tela.blit(startTexto, (466, 487))
