@@ -176,6 +176,8 @@ def jogar():
 
     NUM_INIMIGOS = 2
     inimigos = [Inimigo() for _ in range(NUM_INIMIGOS)]
+    zumbisMortos = 0
+    zumbisSpawns = 10
 
     class Projetil:
         def __init__(self, x, y, img):
@@ -224,9 +226,9 @@ def jogar():
                         pygame.mixer.music.unpause()
 
         if jogoPausado:
-            instrucaoPause = fonteInstrucao.render("Pressione ESPAÇO para continuar", True, preto)
+            instrucaoPause = fonteInstrucao.render("Press SPACE to Unpause Game", True, preto)
         else:
-            instrucaoPause = fonteInstrucao.render("Pressione ESPAÇO para pausar", True, preto)
+            instrucaoPause = fonteInstrucao.render("Press SPACE to Pause Game", True, preto)
 
         if jogoPausado:
             tela.blit(fundo, (0, 0))
@@ -288,19 +290,41 @@ def jogar():
             for inimigo in inimigos:
                 inimigo.desenhar()
 
-            for p in projeteis[:]:
+            inimigosRemover = []
+            projeteisRemover = []
+            inimigosAdicionar = []
+
+            for p in projeteis:
                 projetilRect = pygame.Rect(p.x, p.y, p.imagem.get_width(), p.imagem.get_height())
-                for i in inimigos[:]:
+                for i in inimigos:
                     inimigoRect = pygame.Rect(i.x, i.y, i.imagem.get_width(), i.imagem.get_height())
                     if projetilRect.colliderect(inimigoRect):
-                        projeteis.remove(p)
-                        inimigos.remove(i)
-                        inimigos.append(Inimigo())
+                        if p not in projeteisRemover:
+                            projeteisRemover.append(p)
+                        if i not in inimigosRemover:
+                            inimigosRemover.append(i)
+                        inimigosAdicionar.append(Inimigo())
                         pontos += 1
-                        break
+                        zumbisMortos += 1
+
+                        if zumbisMortos >= zumbisSpawns:
+                            inimigosAdicionar.append(Inimigo())
+                            zumbisSpawns += 10
+
+                        break 
+
+            for p in projeteisRemover:
+                if p in projeteis:
+                    projeteis.remove(p)
+            for i in inimigosRemover:
+                if i in inimigos:
+                    inimigos.remove(i)
+                    
+            for novo in inimigosAdicionar:
+                inimigos.append(novo)
 
             tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
-            tela.blit(instrucaoPause, (150, 10))
+            tela.blit(instrucaoPause, (160, 10))
             Pontos = pontosMensagem.render(f"Pontos: {pontos}", True, preto)
             tela.blit(Pontos, (10, 0))
             pygame.display.update()
