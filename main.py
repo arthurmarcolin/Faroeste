@@ -21,23 +21,29 @@ corCaixa = (253, 193, 127)
 corS = (243, 146, 85)
 amarelo = (255, 255, 0)
 cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (90, 80))
+Zumbi = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi.png").convert_alpha(), (45, 65))
+Zumbi2 = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi2.png").convert_alpha(), (45, 65))
+icone = pygame.image.load("recursos/icone.png")
 cabecaZumbi = pygame.image.load("recursos/cabeçaZumbi.png")
 fundoInicio = pygame.image.load("recursos/fundoInicio.png")
 fundo = pygame.image.load("recursos/fundo.png")
-icone = pygame.image.load("recursos/icone.png")
-pygame.display.set_icon(icone)
 nuvem = pygame.image.load("recursos/nuvem.png")
 projetil = pygame.image.load("recursos/projetil.png")
-Zumbi = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi.png").convert_alpha(), (45, 65))
-Zumbi2 = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi2.png").convert_alpha(), (45, 65))
+pygame.display.set_icon(icone)
 somTiro = pygame.mixer.Sound("recursos/somTiro.mp3")
 somZumbi = pygame.mixer.Sound("recursos/somZumbi1.mp3")
 somZumbi2 = pygame.mixer.Sound("recursos/somZumbi2.mp3")
 fonteInicio = pygame.font.SysFont("comicsans",25)
-fonteTitulo = pygame.font.Font("recursos/FonteInicio.ttf",150)
 fonteExplicacao = pygame.font.SysFont("comicsans",18)
+fonteInstrucao = pygame.font.SysFont("comicsans",20)
 fontePause = pygame.font.SysFont("comicsans", 100)
+Pause = pygame.font.SysFont("comicsans", 20)
+fonteTitulo = pygame.font.Font("recursos/FonteInicio.ttf",150)
+pontosMensagem = pygame.font.SysFont("comicsans", 30)
+mensagemPause = Pause.render("Pressione Espaço para pausar ", True, preto)
 pause = fontePause.render("PAUSE", True, preto)
+startTitulo = fonteTitulo.render("BEM-VINDO", True, bege)
+startTexto = fonteInicio.render("Jogar", True, preto)
 pauseRect = pause.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
 zumbisComSons = [
     (Zumbi, somZumbi),
@@ -126,6 +132,7 @@ root.mainloop()
 engine.say(f"Seja Bem Vindo {nome} ")
 engine.runAndWait()
 def jogar():
+    pontos = 0
     jogoPausado = False
     solX, solY = 1000, 5  
     raio = 20
@@ -202,11 +209,12 @@ def jogar():
                 movimentoXCowboy = 0
             elif evento.type == pygame.KEYUP and evento.key == pygame.K_LEFT:
                 movimentoXCowboy = 0
-            elif evento.type == pygame.KEYUP and evento.key == pygame.K_s:
-                projetilX = posicaoXCowboy + 68
-                projetilY = posicaoYCowboy + 2
-                projeteis.append(Projetil(projetilX, projetilY, projetil))
-                somTiro.play()
+            if not jogoPausado:   
+                if evento.type == pygame.KEYUP and evento.key == pygame.K_s:
+                    projetilX = posicaoXCowboy + 68
+                    projetilY = posicaoYCowboy + 2
+                    projeteis.append(Projetil(projetilX, projetilY, projetil))
+                    somTiro.play()
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_SPACE:
                     jogoPausado = not jogoPausado
@@ -214,9 +222,20 @@ def jogar():
                         pygame.mixer.music.pause()
                     else:
                         pygame.mixer.music.unpause()
+
         if jogoPausado:
+            instrucaoPause = fonteInstrucao.render("Pressione ESPAÇO para continuar", True, preto)
+        else:
+            instrucaoPause = fonteInstrucao.render("Pressione ESPAÇO para pausar", True, preto)
+
+        if jogoPausado:
+            tela.blit(fundo, (0, 0))
+            Pontos = pontosMensagem.render(f"Pontos: {pontos}", True, preto)
+            tela.blit(Pontos, (10, 0))
             tela.blit(pause, pauseRect)
+            tela.blit(instrucaoPause, (150, 10))
             pygame.display.update()
+            
 
         if not jogoPausado:
 
@@ -277,10 +296,13 @@ def jogar():
                         projeteis.remove(p)
                         inimigos.remove(i)
                         inimigos.append(Inimigo())
+                        pontos += 1
                         break
 
             tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
-
+            tela.blit(instrucaoPause, (150, 10))
+            Pontos = pontosMensagem.render(f"Pontos: {pontos}", True, preto)
+            tela.blit(Pontos, (10, 0))
             pygame.display.update()
         
         
@@ -314,8 +336,6 @@ def start():
         caixaTexto = pygame.draw.rect(tela, corCaixa, pygame.Rect (225, 320, larguraCaixaTexto, alturaCaixaTexto), border_radius=15)
         detalheS = pygame.draw.rect(tela, corS , pygame.Rect (498, 450, larguraS, alturaS), border_radius=5)
         startBotao = pygame.draw.rect(tela, corS, (450,490, larguraBotaoStart, alturaBotaoStart), border_radius=10)
-        startTitulo = fonteTitulo.render("BEM-VINDO", True, bege)
-        startTexto = fonteInicio.render("Jogar", True, preto)
         playerName = fonteExplicacao.render(f"Nickname: {nome}", True, preto)
         explicacoes = [
         "O objetivo do jogo é matar os zumbis antes que eles cheguem ao",

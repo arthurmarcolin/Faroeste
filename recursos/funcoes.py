@@ -48,7 +48,7 @@ def contagemRegressiva():
         tela.blit(cowboy, (420, 600))
         texto = fonteContagem.render(str(i), True, preto)
         
-        textoRect = texto.getRect(center=(tamanho[0]//2, tamanho[1]//2))
+        textoRect = texto.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
         tela.blit(texto, textoRect)
         pygame.display.flip()
         pygame.time.delay(1000)  
@@ -56,7 +56,7 @@ def contagemRegressiva():
     tela.blit(fundo,(0,0))
     tela.blit(cowboy, (420, 600))
     texto = fonteContagem.render("Começou!", True, preto)
-    textoRect = texto.getRect(center=(tamanho[0]//2, tamanho[1]//2))
+    textoRect = texto.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
     tela.blit(texto, textoRect)
     pygame.display.flip()
     pygame.time.delay(1000)
