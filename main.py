@@ -19,7 +19,8 @@ preto = (0, 0 ,0 )
 bege = (198, 129, 40)
 corCaixa = (253, 193, 127)
 corS = (243, 146, 85)
-cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (110, 100))
+amarelo = (255, 255, 0)
+cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (90, 80))
 cabecaZumbi = pygame.image.load("recursos/cabeçaZumbi.png")
 fundoInicio = pygame.image.load("recursos/fundoInicio.png")
 fundo = pygame.image.load("recursos/fundo.png")
@@ -27,8 +28,8 @@ icone = pygame.image.load("recursos/icone.png")
 pygame.display.set_icon(icone)
 nuvem = pygame.image.load("recursos/nuvem.png")
 projetil = pygame.image.load("recursos/projetil.png")
-Zumbi = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi.png").convert_alpha(), (60, 80))
-Zumbi2 = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi2.png").convert_alpha(), (60, 80))
+Zumbi = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi.png").convert_alpha(), (45, 65))
+Zumbi2 = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi2.png").convert_alpha(), (45, 65))
 somTiro = pygame.mixer.Sound("recursos/somTiro.mp3")
 somZumbi = pygame.mixer.Sound("recursos/somZumbi1.mp3")
 somZumbi2 = pygame.mixer.Sound("recursos/somZumbi2.mp3")
@@ -45,6 +46,17 @@ faixasPosicaoX = [
     (350, 670),
     (230, 690),
 ]
+
+zumbiCabeca = pygame.transform.smoothscale(pygame.image.load("recursos/cabeçaZumbi.png"), (40, 35))
+zumbiCabecaRect = zumbiCabeca.get_rect()
+
+zumbiCabecaRect.x = random.randint(0, tamanho[0] - zumbiCabecaRect.width)
+zumbiCabecaRect.y = random.randint(0, tamanho[1] - zumbiCabecaRect.height)
+
+velocidadeCabeca = 0.3
+
+direcaoX = random.randint(-10, 10)
+direcaoY = random.randint(-10, 10)
 
 def reconhecerFala():
     recognizer = sr.Recognizer()
@@ -68,11 +80,9 @@ def reconhecerFala():
         except sr.WaitTimeoutError:
             label_status.after(0, lambda: label_status.config(text="Tempo de escuta acabou."))
 
-
 def iniciarVozEreconhecimento():
     
     falarTexto("Fale seu nickname em voz alta para começar.")
-   
     reconhecerFala()
 
 def iniciarThreadVoz():
@@ -89,7 +99,7 @@ def obter_nome():
 
 root = tk.Tk()
 larguraJanela = 400
-alturaJanela = 100
+alturaJanela = 110
 larguraTela = root.winfo_screenwidth()
 alturaTela = root.winfo_screenheight()
 pos_x = (larguraTela - larguraJanela) // 2
@@ -108,15 +118,21 @@ label_status = tk.Label(root, text="")
 label_status.pack(pady=5)
 
 root.after(1000, iniciarThreadVoz)
-
 root.mainloop()
 
 engine.say(f"Seja Bem Vindo {nome} ")
 engine.runAndWait()
 def jogar():
+    solX, solY = 5, 5  
+    raio = 20
+    raioMinimo = 30
+    raioMaximo = 40
+    crescendo = True  
+    velocidadePulso = 0.1 
+    tempoDirecao = 0
+    intervaloTroca = 2000
     posicaoXCowboy = 420
     posicaoYCowboy = 600
-    cowboyTamanho = (110, 100)
     movimentoXCowboy = 0
     projeteis = []
     pygame.mixer.music.stop()
@@ -124,7 +140,6 @@ def jogar():
     pygame.mixer.music.set_volume(0.30)
     pygame.mixer.music.play()
     pygame.mixer.music.play(-1)
-
     class Inimigo:
         def __init__(self):
             self.imagem, self.som = random.choice(zumbisComSons)
@@ -157,7 +172,7 @@ def jogar():
             self.x = x
             self.y = y
             self.img = img
-            self.velocidade = -10
+            self.velocidade = -13
             self.limiteSuperior = 350
 
         def mover(self):
@@ -173,7 +188,8 @@ def jogar():
     while True:
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
-                quit()
+                pygame.quit()
+                exit()
             elif evento.type == pygame.KEYDOWN and evento.key == pygame.K_RIGHT:
                 movimentoXCowboy = 7
             elif evento.type == pygame.KEYDOWN and evento.key == pygame.K_LEFT:
@@ -183,21 +199,50 @@ def jogar():
             elif evento.type == pygame.KEYUP and evento.key == pygame.K_LEFT:
                 movimentoXCowboy = 0
             elif evento.type == pygame.KEYUP and evento.key == pygame.K_s:
-                x_projetil = posicaoXCowboy + 82
-                y_projetil = posicaoYCowboy + 7
-                projeteis.append(Projetil(x_projetil, y_projetil, projetil))
-                somTiro.play()                  
+                projetilX = posicaoXCowboy + 68
+                projetilY = posicaoYCowboy + 2
+                projeteis.append(Projetil(projetilX, projetilY, projetil))
+                somTiro.play()
+        
+        tempoPassado = relogio.tick(60)
+        tempoDirecao += tempoPassado
+
+        if tempoDirecao >= intervaloTroca:
+            direcaoX = random.randint(-10, 10)
+            direcaoY = random.randint(-10, 10)
+            tempoDirecao = 0
+
+        zumbiCabecaRect.x += direcaoX * velocidadeCabeca
+        zumbiCabecaRect.y += direcaoY * velocidadeCabeca
+
+        if zumbiCabecaRect.left <= 0 or zumbiCabecaRect.right >= tamanho[0]:
+            direcaoX = -direcaoX 
+        if zumbiCabecaRect.top <= 0 or zumbiCabecaRect.bottom >= tamanho[1]:
+            direcaoY = -direcaoY 
+
+        if crescendo:
+            raio += velocidadePulso
+            if raio >= raioMaximo:
+                crescendo = False
+        else:
+            raio -= velocidadePulso
+            if raio <= raioMinimo:
+                crescendo = True
             
         if posicaoXCowboy < 150 :
             posicaoXCowboy = 150
         elif posicaoXCowboy > 670:
             posicaoXCowboy = 670
 
+        posicaoXCowboy = posicaoXCowboy + movimentoXCowboy 
+
         for inimigo in inimigos:
             inimigo.reaparecer()
 
                 
         tela.blit(fundo, (0, 0))
+        tela.blit(zumbiCabeca, zumbiCabecaRect)
+        pygame.draw.circle(tela, amarelo, (solX, solY), int(raio))
 
         for p in projeteis[:]:
             p.mover()
@@ -218,13 +263,10 @@ def jogar():
                     inimigos.append(Inimigo())
                     break
 
-        
-
         tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
-        tela.blit(nuvem, (450, 100))
 
         pygame.display.update()
-        relogio.tick(60)
+        
         
 def start():
     larguraBotaoStart = 100

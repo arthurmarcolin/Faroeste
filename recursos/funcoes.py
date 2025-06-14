@@ -9,7 +9,7 @@ branco = (255,255,255)
 preto = (0, 0 ,0 )
 tela = pygame.display.set_mode( tamanho )
 fundo = pygame.image.load("recursos/fundo.png")
-cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (110, 100))
+cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (90, 80))
 def limpar_tela():
     os.system("cls")
     
