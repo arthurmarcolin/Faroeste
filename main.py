@@ -36,6 +36,9 @@ somZumbi2 = pygame.mixer.Sound("recursos/somZumbi2.mp3")
 fonteInicio = pygame.font.SysFont("comicsans",25)
 fonteTitulo = pygame.font.Font("recursos/FonteInicio.ttf",150)
 fonteExplicacao = pygame.font.SysFont("comicsans",18)
+fontePause = pygame.font.SysFont("comicsans", 100)
+pause = fontePause.render("PAUSE", True, preto)
+pauseRect = pause.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
 zumbisComSons = [
     (Zumbi, somZumbi),
     (Zumbi2, somZumbi2),  
@@ -123,7 +126,8 @@ root.mainloop()
 engine.say(f"Seja Bem Vindo {nome} ")
 engine.runAndWait()
 def jogar():
-    solX, solY = 5, 5  
+    jogoPausado = False
+    solX, solY = 1000, 5  
     raio = 20
     raioMinimo = 30
     raioMaximo = 40
@@ -203,69 +207,81 @@ def jogar():
                 projetilY = posicaoYCowboy + 2
                 projeteis.append(Projetil(projetilX, projetilY, projetil))
                 somTiro.play()
-        
-        tempoPassado = relogio.tick(60)
-        tempoDirecao += tempoPassado
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_SPACE:
+                    jogoPausado = not jogoPausado
+                    if jogoPausado:
+                        pygame.mixer.music.pause()
+                    else:
+                        pygame.mixer.music.unpause()
+        if jogoPausado:
+            tela.blit(pause, pauseRect)
+            pygame.display.update()
 
-        if tempoDirecao >= intervaloTroca:
-            direcaoX = random.randint(-10, 10)
-            direcaoY = random.randint(-10, 10)
-            tempoDirecao = 0
+        if not jogoPausado:
 
-        zumbiCabecaRect.x += direcaoX * velocidadeCabeca
-        zumbiCabecaRect.y += direcaoY * velocidadeCabeca
-
-        if zumbiCabecaRect.left <= 0 or zumbiCabecaRect.right >= tamanho[0]:
-            direcaoX = -direcaoX 
-        if zumbiCabecaRect.top <= 0 or zumbiCabecaRect.bottom >= tamanho[1]:
-            direcaoY = -direcaoY 
-
-        if crescendo:
-            raio += velocidadePulso
-            if raio >= raioMaximo:
-                crescendo = False
-        else:
-            raio -= velocidadePulso
-            if raio <= raioMinimo:
-                crescendo = True
+            tempoPassado = relogio.tick(60)
+            tempoDirecao += tempoPassado
             
-        if posicaoXCowboy < 150 :
-            posicaoXCowboy = 150
-        elif posicaoXCowboy > 670:
-            posicaoXCowboy = 670
+            if tempoDirecao >= intervaloTroca:
+                direcaoX = random.randint(-10, 10)
+                direcaoY = random.randint(-10, 10)
+                tempoDirecao = 0
 
-        posicaoXCowboy = posicaoXCowboy + movimentoXCowboy 
+            zumbiCabecaRect.x += direcaoX * velocidadeCabeca
+            zumbiCabecaRect.y += direcaoY * velocidadeCabeca
 
-        for inimigo in inimigos:
-            inimigo.reaparecer()
+            if zumbiCabecaRect.left <= 0 or zumbiCabecaRect.right >= tamanho[0]:
+                direcaoX = -direcaoX 
+            if zumbiCabecaRect.top <= 0 or zumbiCabecaRect.bottom >= tamanho[1]:
+                direcaoY = -direcaoY 
 
+            if crescendo:
+                raio += velocidadePulso
+                if raio >= raioMaximo:
+                    crescendo = False
+            else:
+                raio -= velocidadePulso
+                if raio <= raioMinimo:
+                    crescendo = True
                 
-        tela.blit(fundo, (0, 0))
-        tela.blit(zumbiCabeca, zumbiCabecaRect)
-        pygame.draw.circle(tela, amarelo, (solX, solY), int(raio))
+            if posicaoXCowboy < 150 :
+                posicaoXCowboy = 150
+            elif posicaoXCowboy > 670:
+                posicaoXCowboy = 670
 
-        for p in projeteis[:]:
-            p.mover()
-            p.desenhar()
-            if p.limiteProjetil():
-                projeteis.remove(p)
-                
-        for inimigo in inimigos:
-            inimigo.desenhar()
+            posicaoXCowboy = posicaoXCowboy + movimentoXCowboy 
 
-        for p in projeteis[:]:
-            projetilRect = pygame.Rect(p.x, p.y, p.imagem.get_width(), p.imagem.get_height())
-            for i in inimigos[:]:
-                inimigoRect = pygame.Rect(i.x, i.y, i.imagem.get_width(), i.imagem.get_height())
-                if projetilRect.colliderect(inimigoRect):
+            for inimigo in inimigos:
+                inimigo.reaparecer()
+
+                    
+            tela.blit(fundo, (0, 0))
+            tela.blit(zumbiCabeca, zumbiCabecaRect)
+            pygame.draw.circle(tela, amarelo, (solX, solY), int(raio))
+
+            for p in projeteis[:]:
+                p.mover()
+                p.desenhar()
+                if p.limiteProjetil():
                     projeteis.remove(p)
-                    inimigos.remove(i)
-                    inimigos.append(Inimigo())
-                    break
+                    
+            for inimigo in inimigos:
+                inimigo.desenhar()
 
-        tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
+            for p in projeteis[:]:
+                projetilRect = pygame.Rect(p.x, p.y, p.imagem.get_width(), p.imagem.get_height())
+                for i in inimigos[:]:
+                    inimigoRect = pygame.Rect(i.x, i.y, i.imagem.get_width(), i.imagem.get_height())
+                    if projetilRect.colliderect(inimigoRect):
+                        projeteis.remove(p)
+                        inimigos.remove(i)
+                        inimigos.append(Inimigo())
+                        break
 
-        pygame.display.update()
+            tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
+
+            pygame.display.update()
         
         
 def start():

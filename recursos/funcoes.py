@@ -42,22 +42,22 @@ def escreverDados(nome, pontos):
     banco.close()
     
 def contagemRegressiva():
-    fonte_contagem = pygame.font.SysFont("comicsans",100)
+    fonteContagem = pygame.font.SysFont("comicsans",100)
     for i in range(3, 0, -1):
         tela.blit(fundo,(0,0))
         tela.blit(cowboy, (420, 600))
-        texto = fonte_contagem.render(str(i), True, preto)
+        texto = fonteContagem.render(str(i), True, preto)
         
-        texto_rect = texto.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
-        tela.blit(texto, texto_rect)
+        textoRect = texto.getRect(center=(tamanho[0]//2, tamanho[1]//2))
+        tela.blit(texto, textoRect)
         pygame.display.flip()
         pygame.time.delay(1000)  
     
     tela.blit(fundo,(0,0))
     tela.blit(cowboy, (420, 600))
-    texto = fonte_contagem.render("Começou!", True, preto)
-    texto_rect = texto.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
-    tela.blit(texto, texto_rect)
+    texto = fonteContagem.render("Começou!", True, preto)
+    textoRect = texto.getRect(center=(tamanho[0]//2, tamanho[1]//2))
+    tela.blit(texto, textoRect)
     pygame.display.flip()
     pygame.time.delay(1000)
 
