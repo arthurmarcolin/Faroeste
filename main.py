@@ -7,10 +7,10 @@ from recursos.funcoes import contagemRegressiva
 from recursos.funcoes import falarTexto
 engine=pyttsx3.init()
 pygame.init()
-tamanho = (1000,700)
+largura, altura = (1000,700)
 relogio = pygame.time.Clock()
-tela = pygame.display.set_mode( tamanho )
-pygame.display.set_caption("Forasteiro Maluko")
+tela = pygame.display.set_mode( (largura, altura) )
+pygame.display.set_caption("Cowboy Maluco")
 corCaixa = (253, 193, 127)
 amarelo = (255, 255, 0)
 vermelho = (255, 0, 0)
@@ -45,7 +45,7 @@ pause = fontePause.render("PAUSE", True, preto)
 derrotaMensagem = fonteTitulo.render("VOCE PERDEU!", True, corCaixa)
 startTitulo = fonteTitulo.render("BEM-VINDO", True, bege)
 startTexto = fonteInicio.render("Jogar", True, preto)
-pauseRect = pause.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
+pauseRect = pause.get_rect(center=((largura, altura)[0]//2, (largura, altura)[1]//2))
 zumbisComSons = [
     (Zumbi, somZumbi),
     (Zumbi2, somZumbi2),  
@@ -60,8 +60,8 @@ faixasPosicaoX = [
 zumbiCabeca = pygame.transform.smoothscale(pygame.image.load("recursos/cabeçaZumbi.png"), (40, 35))
 zumbiCabecaRect = zumbiCabeca.get_rect()
 
-zumbiCabecaRect.x = random.randint(0, tamanho[0] - zumbiCabecaRect.width)
-zumbiCabecaRect.y = random.randint(0, tamanho[1] - zumbiCabecaRect.height)
+zumbiCabecaRect.x = random.randint(0, (largura, altura)[0] - zumbiCabecaRect.width)
+zumbiCabecaRect.y = random.randint(0, (largura, altura)[1] - zumbiCabecaRect.height)
 
 velocidadeCabeca = 0.3
 
@@ -171,6 +171,7 @@ def jogar():
             self.som.play()
 
         def reaparecer(self):
+            nonlocal vida, dano, alpha, pontos
             self.y += self.velocidade
             if self.y > 700:
                 self.y = random.randint(250, 450)
@@ -178,11 +179,12 @@ def jogar():
                 self.x = random.randint(faixa[0], faixa[1] - self.largura)
                 self.imagem, self.som = random.choice(zumbisComSons)
                 self.som.play()
+                pontos = max(0, pontos - 20)
 
         def desenhar(self):
             tela.blit(self.imagem, (self.x, self.y))
 
-    NUM_INIMIGOS = 4
+    NUM_INIMIGOS = 6
     inimigos = [Inimigo() for _ in range(NUM_INIMIGOS)]
     zumbisMortos = 0
     zumbisSpawns = 10
@@ -260,9 +262,9 @@ def jogar():
             zumbiCabecaRect.x += direcaoX * velocidadeCabeca
             zumbiCabecaRect.y += direcaoY * velocidadeCabeca
 
-            if zumbiCabecaRect.left <= 0 or zumbiCabecaRect.right >= tamanho[0]:
+            if zumbiCabecaRect.left <= 0 or zumbiCabecaRect.right >= (largura, altura)[0]:
                 direcaoX = -direcaoX 
-            if zumbiCabecaRect.top <= 0 or zumbiCabecaRect.bottom >= tamanho[1]:
+            if zumbiCabecaRect.top <= 0 or zumbiCabecaRect.bottom >= (largura, altura)[1]:
                 direcaoY = -direcaoY 
 
             if crescendo:
@@ -350,13 +352,13 @@ def jogar():
                         
                 if vida < maximoVidas:
                     alphaVermelho = int((1 - (vida / maximoVidas)) * 30)
-                    overlayVermelho = pygame.Surface((tamanho))
+                    overlayVermelho = pygame.Surface((largura, altura))
                     overlayVermelho.set_alpha(alphaVermelho)
                     overlayVermelho.fill(vermelho)
                     tela.blit(overlayVermelho, (0, 0))
 
                 if dano:
-                    overlay = pygame.Surface((tamanho))
+                    overlay = pygame.Surface((largura, altura))
                     overlay.set_alpha(alpha)
                     overlay.fill(vermelho)
                     tela.blit(overlay, (0, 0))
@@ -370,7 +372,7 @@ def jogar():
                 if inimigo in inimigos:
                     inimigos.remove(inimigo)
                     inimigos.append(Inimigo())
-
+                
             tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
             tela.blit(instrucaoPause, (175, 4))
             Pontos = pontosMensagem.render(f"Pontos: {pontos}", True, preto)
