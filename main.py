@@ -1,4 +1,4 @@
-import os, json, pygame, random, pyttsx3, threading
+import pygame, random, pyttsx3, threading
 import tkinter as tk
 import speech_recognition as sr
 from datetime import datetime
@@ -11,12 +11,13 @@ tamanho = (1000,700)
 relogio = pygame.time.Clock()
 tela = pygame.display.set_mode( tamanho )
 pygame.display.set_caption("Forasteiro Maluko")
-branco = (255,255,255)
-preto = (0, 0 ,0 )
-bege = (198, 129, 40)
 corCaixa = (253, 193, 127)
-corS = (243, 146, 85)
 amarelo = (255, 255, 0)
+vermelho = (255, 0, 0)
+branco = (255,255,255)
+bege = (198, 129, 40)
+corS = (243, 146, 85)
+preto = (0, 0 ,0 )
 cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (90, 80))
 Zumbi = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi.png").convert_alpha(), (45, 65))
 Zumbi2 = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi2.png").convert_alpha(), (45, 65))
@@ -45,7 +46,6 @@ derrotaMensagem = fonteTitulo.render("VOCE PERDEU!", True, corCaixa)
 startTitulo = fonteTitulo.render("BEM-VINDO", True, bege)
 startTexto = fonteInicio.render("Jogar", True, preto)
 pauseRect = pause.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
-zumbis = [Zumbi, Zumbi2]
 zumbisComSons = [
     (Zumbi, somZumbi),
     (Zumbi2, somZumbi2),  
@@ -91,7 +91,7 @@ def reconhecerFala():
             label_status.after(0, lambda: label_status.config(text="Tempo de escuta acabou."))
 
 def iniciarVozEreconhecimento():
-    
+
     falarTexto("Fale seu nickname em voz alta para começar.")
     reconhecerFala()
 
@@ -132,8 +132,14 @@ root.mainloop()
 
 engine.say(f"Seja Bem Vindo {nome} ")
 engine.runAndWait()
+
 def jogar():
-    vidas = 5
+    dano = False
+    maximoVidas = 5
+    vida = maximoVidas
+    dano = False
+    alpha = 0
+    alphaVermelho = 0
     pontos = 0
     jogoPausado = False
     solX, solY = 1000, 5  
@@ -176,7 +182,7 @@ def jogar():
         def desenhar(self):
             tela.blit(self.imagem, (self.x, self.y))
 
-    NUM_INIMIGOS = 2
+    NUM_INIMIGOS = 4
     inimigos = [Inimigo() for _ in range(NUM_INIMIGOS)]
     zumbisMortos = 0
     zumbisSpawns = 10
@@ -187,7 +193,7 @@ def jogar():
             self.x = x
             self.y = y
             self.img = img
-            self.velocidade = -13
+            self.velocidade = -14
             self.limiteSuperior = 350
 
         def mover(self):
@@ -312,6 +318,7 @@ def jogar():
                         if zumbisMortos >= zumbisSpawns:
                             inimigosAdicionar.append(Inimigo())
                             zumbisSpawns += 10
+                            zumbisMortos = 0
 
                         break 
 
@@ -331,26 +338,45 @@ def jogar():
             for inimigo in inimigos:
                 inimigoRect = pygame.Rect(inimigo.x, inimigo.y, inimigo.largura, inimigo.altura)
                 if cowboyRect.colliderect(inimigoRect):
-                    vidas -= 1
+                    dano = True
+                    vida -= 1
+                    alpha = 150
                     inimigosColisao.append(inimigo)
 
-                    if vidas <= 0:
+                    if vida <= 0:
+                        vida = 0
                         registrarDerrrota()
                         dead()
                         
+                if vida < maximoVidas:
+                    alphaVermelho = int((1 - (vida / maximoVidas)) * 30)
+                    overlayVermelho = pygame.Surface((tamanho))
+                    overlayVermelho.set_alpha(alphaVermelho)
+                    overlayVermelho.fill(vermelho)
+                    tela.blit(overlayVermelho, (0, 0))
+
+                if dano:
+                    overlay = pygame.Surface((tamanho))
+                    overlay.set_alpha(alpha)
+                    overlay.fill(vermelho)
+                    tela.blit(overlay, (0, 0))
+                    alpha -= 7
+
+                    if alpha <= 0:
+                        dano = False
+                        alpha = 0
 
             for inimigo in inimigosColisao:
                 if inimigo in inimigos:
                     inimigos.remove(inimigo)
                     inimigos.append(Inimigo())
-                               
 
             tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
-            tela.blit(instrucaoPause, (160, 10))
+            tela.blit(instrucaoPause, (175, 4))
             Pontos = pontosMensagem.render(f"Pontos: {pontos}", True, preto)
-            tela.blit(Pontos, (10, 0))
-            for i in range(vidas):
-                tela.blit(coracao, (10 + i * 35, 40))
+            tela.blit(Pontos, (5, -5))
+            for i in range(vida):
+                tela.blit(coracao, (10 + i * 35, 50))
             pygame.display.update()
 
             def registrarDerrrota():
@@ -418,7 +444,7 @@ def dead():
         linhas = ["Nenhum registro de partida encontrado."]
 
     quantidadeLinhas = linhas[-5:]
-    inicioHistorico = 300
+    inicioHistorico = 440
 
     while True:
         for evento in pygame.event.get():
@@ -427,13 +453,13 @@ def dead():
 
         tela.blit(cowboyChorando, (0, 0))
         tela.blit(derrotaMensagem, (220, 20))
-        caixaTexto = pygame.draw.rect(tela, corCaixa, pygame.Rect (100, 440, 830, 210), border_radius=15)
+        caixaTexto = pygame.draw.rect(tela, corCaixa, pygame.Rect (85, 440, 855, 210), border_radius=15)
         
         y = inicioHistorico
         for linha in quantidadeLinhas:
             linhaFormatada = linha.strip()
             historico = pontosMensagem.render(linhaFormatada, True, preto)
-            tela.blit(historico, (115, y))
+            tela.blit(historico, (100, y))
             y += 40
 
         pygame.display.update()

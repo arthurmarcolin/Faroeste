@@ -1,8 +1,4 @@
-import os, time, json, pygame, pyttsx3, threading
-from datetime import datetime
-import speech_recognition as sr
-import tkinter as tk
-from tkinter import messagebox
+import time, pygame, pyttsx3
 engine=pyttsx3.init()
 tamanho = (1000, 700)
 branco = (255,255,255)
