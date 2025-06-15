@@ -1,15 +1,13 @@
 import os, json, pygame, random, pyttsx3, threading
 import tkinter as tk
 import speech_recognition as sr
+from datetime import datetime
 from tkinter import messagebox
-from recursos.funcoes import inicializarBancoDeDados
 from recursos.funcoes import contagemRegressiva
-from recursos.funcoes import escreverDados
-from recursos.funcoes import aguarde
 from recursos.funcoes import falarTexto
 engine=pyttsx3.init()
 pygame.init()
-inicializarBancoDeDados()
+
 tamanho = (1000,700)
 relogio = pygame.time.Clock()
 tela = pygame.display.set_mode( tamanho )
@@ -29,6 +27,7 @@ fundoInicio = pygame.image.load("recursos/fundoInicio.png")
 fundo = pygame.image.load("recursos/fundo.png")
 nuvem = pygame.image.load("recursos/nuvem.png")
 projetil = pygame.image.load("recursos/projetil.png")
+coracao = pygame.transform.smoothscale(pygame.image.load("recursos/coração.png"), (30, 30))
 pygame.display.set_icon(icone)
 somTiro = pygame.mixer.Sound("recursos/somTiro.mp3")
 somZumbi = pygame.mixer.Sound("recursos/somZumbi1.mp3")
@@ -45,6 +44,7 @@ pause = fontePause.render("PAUSE", True, preto)
 startTitulo = fonteTitulo.render("BEM-VINDO", True, bege)
 startTexto = fonteInicio.render("Jogar", True, preto)
 pauseRect = pause.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
+zumbis = [Zumbi, Zumbi2]
 zumbisComSons = [
     (Zumbi, somZumbi),
     (Zumbi2, somZumbi2),  
@@ -132,6 +132,7 @@ root.mainloop()
 engine.say(f"Seja Bem Vindo {nome} ")
 engine.runAndWait()
 def jogar():
+    vidas = 5
     pontos = 0
     jogoPausado = False
     solX, solY = 1000, 5  
@@ -323,10 +324,29 @@ def jogar():
             for novo in inimigosAdicionar:
                 inimigos.append(novo)
 
+            cowboyRect = pygame.Rect(posicaoXCowboy, posicaoYCowboy, cowboy.get_width(), cowboy.get_height())
+            inimigosColisao = []
+
+            for inimigo in inimigos:
+                inimigoRect = pygame.Rect(inimigo.x, inimigo.y, inimigo.largura, inimigo.altura)
+                if cowboyRect.colliderect(inimigoRect):
+                    vidas -= 1
+                    inimigosColisao.append(inimigo)
+
+            for inimigo in inimigosColisao:
+                if inimigo in inimigos:
+                    inimigos.remove(inimigo)
+                    inimigos.append(Inimigo())
+                               
+
             tela.blit(cowboy, (posicaoXCowboy, posicaoYCowboy))
             tela.blit(instrucaoPause, (160, 10))
             Pontos = pontosMensagem.render(f"Pontos: {pontos}", True, preto)
             tela.blit(Pontos, (10, 0))
+            for i in range(vidas):
+                tela.blit(coracao, (10 + i * 35, 40))
+            if zumbis > 700:
+                pontos -= 1
             pygame.display.update()
         
         
