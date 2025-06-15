@@ -7,7 +7,6 @@ from recursos.funcoes import contagemRegressiva
 from recursos.funcoes import falarTexto
 engine=pyttsx3.init()
 pygame.init()
-
 tamanho = (1000,700)
 relogio = pygame.time.Clock()
 tela = pygame.display.set_mode( tamanho )
@@ -21,12 +20,13 @@ amarelo = (255, 255, 0)
 cowboy = pygame.transform.smoothscale(pygame.image.load("recursos/cowboy.png"), (90, 80))
 Zumbi = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi.png").convert_alpha(), (45, 65))
 Zumbi2 = pygame.transform.smoothscale(pygame.image.load("recursos/Zumbi2.png").convert_alpha(), (45, 65))
-icone = pygame.image.load("recursos/icone.png")
+cowboyChorando = pygame.image.load("recursos/cowboyChorando.png")
 cabecaZumbi = pygame.image.load("recursos/cabeçaZumbi.png")
 fundoInicio = pygame.image.load("recursos/fundoInicio.png")
+projetil = pygame.image.load("recursos/projetil.png")
+icone = pygame.image.load("recursos/icone.png")
 fundo = pygame.image.load("recursos/fundo.png")
 nuvem = pygame.image.load("recursos/nuvem.png")
-projetil = pygame.image.load("recursos/projetil.png")
 coracao = pygame.transform.smoothscale(pygame.image.load("recursos/coração.png"), (30, 30))
 pygame.display.set_icon(icone)
 somTiro = pygame.mixer.Sound("recursos/somTiro.mp3")
@@ -39,8 +39,9 @@ fontePause = pygame.font.SysFont("comicsans", 100)
 Pause = pygame.font.SysFont("comicsans", 20)
 fonteTitulo = pygame.font.Font("recursos/FonteInicio.ttf",150)
 pontosMensagem = pygame.font.SysFont("comicsans", 30)
-mensagemPause = Pause.render("Pressione Espaço para pausar ", True, preto)
+mensagemPause = Pause.render("Pressione Espaço para pausar ", True, preto )
 pause = fontePause.render("PAUSE", True, preto)
+derrotaMensagem = fonteTitulo.render("VOCE PERDEU!", True, corCaixa)
 startTitulo = fonteTitulo.render("BEM-VINDO", True, bege)
 startTexto = fonteInicio.render("Jogar", True, preto)
 pauseRect = pause.get_rect(center=(tamanho[0]//2, tamanho[1]//2))
@@ -333,6 +334,11 @@ def jogar():
                     vidas -= 1
                     inimigosColisao.append(inimigo)
 
+                    if vidas <= 0:
+                        registrarDerrrota()
+                        dead()
+                        
+
             for inimigo in inimigosColisao:
                 if inimigo in inimigos:
                     inimigos.remove(inimigo)
@@ -345,11 +351,15 @@ def jogar():
             tela.blit(Pontos, (10, 0))
             for i in range(vidas):
                 tela.blit(coracao, (10 + i * 35, 40))
-            if zumbis > 700:
-                pontos -= 1
             pygame.display.update()
-        
-        
+
+            def registrarDerrrota():
+                registro = datetime.now()
+                dataHora = registro.strftime("%Y-%m-%d %H:%M:%S")
+
+                with open("log.dat.", "a", encoding="utf-8") as arquivo:
+                    arquivo.write(f"Derrrota registrada em: {dataHora} | Pontos: {pontos}\n")
+            
 def start():
     larguraBotaoStart = 100
     alturaBotaoStart  = 35
@@ -388,13 +398,44 @@ def start():
         "querda e para atirar use a tecla S ."
         ]   
         for i in range(len(explicacoes)):
-            linha_renderizada = fonteExplicacao.render(explicacoes[i], True, preto)
-            tela.blit(linha_renderizada, (235, 360 + i * 30))
+            linhaRenderizada = fonteExplicacao.render(explicacoes[i], True, preto)
+            tela.blit(linhaRenderizada, (235, 360 + i * 30))
         tela.blit(playerName, (440, 324))
         tela.blit(startTitulo, (265, 20))
         tela.blit(startTexto, (466, 487))
 
         pygame.display.update()
-        relogio.tick(60)    
+        relogio.tick(60)   
 
+def dead():
+    pygame.mixer.music.stop() 
+    
+    try:
+        with open("log.dat", "r", encoding="utf-8") as arquivo:
+            linhas = arquivo.readlines()
+
+    except FileNotFoundError:
+        linhas = ["Nenhum registro de partida encontrado."]
+
+    quantidadeLinhas = linhas[-5:]
+    inicioHistorico = 300
+
+    while True:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                quit()
+
+        tela.blit(cowboyChorando, (0, 0))
+        tela.blit(derrotaMensagem, (220, 20))
+        caixaTexto = pygame.draw.rect(tela, corCaixa, pygame.Rect (100, 440, 830, 210), border_radius=15)
+        
+        y = inicioHistorico
+        for linha in quantidadeLinhas:
+            linhaFormatada = linha.strip()
+            historico = pontosMensagem.render(linhaFormatada, True, preto)
+            tela.blit(historico, (115, y))
+            y += 40
+
+        pygame.display.update()
+        relogio.tick(60) 
 start()
