@@ -39,6 +39,9 @@ O jogo possui efeitos sonoros, animações e um sistema de reconhecimento de voz
 ## Tela do Jogo
 ![Imagem2](https://github.com/user-attachments/assets/49c479ed-3946-436a-9af1-ac2157862a54)
 
+## Testador do Jogo: Felipe Luza - 1136806
+
+
 
 
 
