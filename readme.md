@@ -41,6 +41,8 @@ O jogo possui efeitos sonoros, animações e um sistema de reconhecimento de voz
 
 ## Testador do Jogo: Felipe Luza - 1136806
 
+## Testador do Jogo: Ariel Gonçalves - 1138023
+
 
 
 
